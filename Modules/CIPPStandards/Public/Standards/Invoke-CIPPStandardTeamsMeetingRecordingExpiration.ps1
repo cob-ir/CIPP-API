@@ -33,7 +33,7 @@ function Invoke-CIPPStandardTeamsMeetingRecordingExpiration {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
@@ -91,7 +91,6 @@ function Invoke-CIPPStandardTeamsMeetingRecordingExpiration {
     if ($Settings.report -eq $true) {
         Add-CIPPBPAField -FieldName 'TeamsMeetingRecordingExpiration' -FieldValue $CurrentExpirationDays -StoreAs string -Tenant $Tenant
 
-        $CurrentExpirationDays = if ($StateIsCorrect) { $true } else { $CurrentExpirationDays }
         $CurrentValue = @{
             MeetingRecordingExpirationDays = $CurrentExpirationDays
         }

@@ -35,7 +35,7 @@ function Invoke-CIPPStandardTeamsFederationConfiguration {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
@@ -75,7 +75,7 @@ function Invoke-CIPPStandardTeamsFederationConfiguration {
             $AllowedDomains = $null
             $BlockedDomains = @()
             if ($null -ne $Settings.DomainList) {
-                $AllowedDomainsAsAList = @($Settings.DomainList).Split(',').Trim()
+                $AllowedDomainsAsAList = @($Settings.DomainList).Split(',').Trim() | Sort-Object
             } else {
                 $AllowedDomainsAsAList = @()
             }
@@ -85,7 +85,7 @@ function Invoke-CIPPStandardTeamsFederationConfiguration {
             $AllowedDomains = $AllowAllKnownDomains
             $AllowedDomainsAsAList = @()
             if ($null -ne $Settings.DomainList) {
-                $BlockedDomains = @($Settings.DomainList).Split(',').Trim()
+                $BlockedDomains = @($Settings.DomainList).Split(',').Trim() | Sort-Object
             } else {
                 $BlockedDomains = @()
             }

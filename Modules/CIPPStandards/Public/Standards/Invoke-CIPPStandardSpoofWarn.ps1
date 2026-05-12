@@ -40,7 +40,7 @@ function Invoke-CIPPStandardSpoofWarn {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
@@ -57,6 +57,9 @@ function Invoke-CIPPStandardSpoofWarn {
         Write-LogMessage -API 'Standards' -Tenant $Tenant -Message "Could not get the SpoofWarn state for $Tenant. Error: $ErrorMessage" -Sev Error
         return
     }
+
+    # Sanitize AllowList — the API may return @('') instead of @() for an empty list
+    $CurrentInfo.AllowList = @($CurrentInfo.AllowList | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 
     # Get state value using null-coalescing operator
     $state = $Settings.state.value ?? $Settings.state
