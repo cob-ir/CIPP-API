@@ -30,7 +30,6 @@ function Invoke-CIPPStandardDeployCheckChromeExtension {
             {"type":"autoComplete","multiple":true,"creatable":true,"required":false,"freeSolo":true,"name":"standards.DeployCheckChromeExtension.urlAllowlist","label":"URL Allowlist","placeholder":"e.g. https://example.com/*","helperText":"Enter URLs to allowlist in the extension. Press enter to add each URL. Wildcards are allowed. This should be used for sites that are being blocked by the extension but are known to be safe."}
             {"type":"switch","name":"standards.DeployCheckChromeExtension.domainSquattingEnabled","label":"Enable domain squatting detection","defaultValue":true}
             {"type":"textField","name":"standards.DeployCheckChromeExtension.companyName","label":"Company Name","placeholder":"YOUR-COMPANY","required":false}
-            {"type":"textField","name":"standards.DeployCheckChromeExtension.companyURL","label":"Company URL","placeholder":"https://yourcompany.com","required":false}
             {"type":"textField","name":"standards.DeployCheckChromeExtension.productName","label":"Product Name","placeholder":"YOUR-PRODUCT-NAME","required":false}
             {"type":"textField","name":"standards.DeployCheckChromeExtension.supportEmail","label":"Support Email","placeholder":"support@yourcompany.com","required":false}
             {"type":"textField","name":"standards.DeployCheckChromeExtension.supportUrl","label":"Support URL","placeholder":"https://support.yourcompany.com","required":false}
@@ -64,7 +63,7 @@ function Invoke-CIPPStandardDeployCheckChromeExtension {
     param($Tenant, $Settings)
 
     # Check for required Intune license
-    $TestResult = Test-CIPPStandardLicense -StandardName 'DeployCheckChromeExtension' -TenantFilter $Tenant -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'DeployCheckChromeExtension' -TenantFilter $Tenant -Preset Intune
 
     if ($TestResult -eq $false) {
         Set-CIPPStandardsCompareField -FieldName 'standards.DeployCheckChromeExtension' -FieldValue 'This tenant does not have the required license for this standard.' -Tenant $Tenant
@@ -108,7 +107,7 @@ function Invoke-CIPPStandardDeployCheckChromeExtension {
     $SupportUrl = $Settings.supportUrl ?? ''
     $PrivacyPolicyUrl = $Settings.privacyPolicyUrl ?? ''
     $AboutUrl = $Settings.aboutUrl ?? ''
-    $PrimaryColor = if ($Settings.primaryColor) { $Settings.primaryColor } else { '#F77F00' }
+    $PrimaryColor = if ($Settings.primaryColor) { '#{0}' -f ($Settings.primaryColor -replace '^#+', '') } else { '#F77F00' }
     $LogoUrl = $Settings.logoUrl ?? ''
 
     ##########################################################################
@@ -137,7 +136,7 @@ function Invoke-CIPPStandardDeployCheckChromeExtension {
         ExtSettingsKey     = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionSettings\`$edgeExtensionId"
         ToolbarProp        = 'toolbar_state'
         ToolbarPinned      = 'force_shown'
-        ToolbarUnpinned    = 'hidden'
+        ToolbarUnpinned    = 'default_hidden'
     }
 )
 

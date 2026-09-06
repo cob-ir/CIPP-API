@@ -35,17 +35,39 @@ function Invoke-CIPPStandardGroupTemplate {
     #>
     param($Tenant, $Settings)
 
-    $existingGroups = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/groups?$top=999&$select=id,displayName,description,membershipRule' -tenantid $tenant
+    try {
+        $existingGroups = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/groups?$top=999&$select=id,displayName,description,membershipRule' -tenantid $tenant -ErrorAction Stop
+    } catch {
+        $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+        Write-LogMessage -API 'Standards' -tenant $tenant -message "Group Template: could not read the tenant's existing groups, skipping this run to avoid creating duplicate groups. Error: $ErrorMessage" -sev 'Error'
+        return
+    }
 
     $Settings.groupTemplate ? ($Settings | Add-Member -NotePropertyName 'TemplateList' -NotePropertyValue $Settings.groupTemplate) : $null
 
     $Table = Get-CippTable -tablename 'templates'
     $Filter = "PartitionKey eq 'GroupTemplate' and (RowKey eq '$($Settings.TemplateList.value -join "' or RowKey eq '")')"
-    $GroupTemplates = (Get-CIPPAzDataTableEntity @Table -Filter $Filter).JSON | ConvertFrom-Json
+    # Resolve %variables% (e.g. %tenantname%) in the template body before any comparison. Groups are
+    # created through New-GraphPostRequest, which substitutes these tokens, so the tenant's actual
+    # group ends up named with the resolved value. Comparing the raw token-bearing name against it
+    # never matched, which recreated the group on every run and left the report permanently
+    # non-compliant. Replacement runs against the serialized JSON (escaped for that context), exactly
+    # as Push-CIPPStandard does for the settings.
+    $GroupTemplates = foreach ($TemplateJSON in (Get-CIPPAzDataTableEntity @Table -Filter $Filter).JSON) {
+        if ($TemplateJSON -match '%') {
+            $TemplateJSON = Get-CIPPTextReplacement -TenantFilter $Tenant -Text $TemplateJSON -EscapeForJson
+        }
+        $TemplateJSON | ConvertFrom-Json
+    }
 
     if ('dynamicDistribution' -in $GroupTemplates.groupType) {
-        # Get dynamic distro list from exchange
-        $DynamicDistros = New-ExoRequest -cmdlet 'Get-DynamicDistributionGroup' -tenantid $tenant -Select 'Identity,Name,Alias,RecipientFilter,PrimarySmtpAddress'
+        try {
+            $DynamicDistros = New-ExoRequest -cmdlet 'Get-DynamicDistributionGroup' -tenantid $tenant -Select 'Identity,Name,Alias,RecipientFilter,PrimarySmtpAddress' -ErrorAction Stop
+        } catch {
+            $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+            Write-LogMessage -API 'Standards' -tenant $tenant -message "Group Template: could not read the tenant's existing dynamic distribution groups, skipping this run to avoid creating duplicate groups. Error: $ErrorMessage" -sev 'Error'
+            return
+        }
     }
 
     if ($Settings.remediate -eq $true) {
@@ -67,7 +89,7 @@ function Invoke-CIPPStandardGroupTemplate {
 
                     # Check if Exchange license is required for distribution groups
                     if ($groupobj.groupType -in @('distribution', 'dynamicdistribution')) {
-                        $TestResult = Test-CIPPStandardLicense -StandardName 'GroupTemplate' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_LITE') -SkipLog
+                        $TestResult = Test-CIPPStandardLicense -StandardName 'GroupTemplate' -TenantFilter $Tenant -Preset Exchange -SkipLog
                         if (!$TestResult) {
                             Write-LogMessage -API 'Standards' -tenant $tenant -message "Cannot create group $($groupobj.displayname) as the tenant is not licensed for Exchange." -Sev 'Error'
                             continue
@@ -132,7 +154,7 @@ function Invoke-CIPPStandardGroupTemplate {
 
                     } else {
                         # Handle Exchange Online groups (Distribution, DynamicDistribution)
-                        $TestResult = Test-CIPPStandardLicense -StandardName 'GroupTemplate' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_LITE') -SkipLog
+                        $TestResult = Test-CIPPStandardLicense -StandardName 'GroupTemplate' -TenantFilter $Tenant -Preset Exchange -SkipLog
                         if (!$TestResult) {
                             Write-LogMessage -API 'Standards' -tenant $tenant -message "Cannot update group $($groupobj.displayName) as the tenant is not licensed for Exchange." -Sev 'Error'
                             continue

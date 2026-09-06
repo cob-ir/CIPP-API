@@ -7,9 +7,14 @@ function Set-CIPPDBCacheIntuneScripts {
     )
 
     try {
-        $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneScriptsCache' -TenantFilter $TenantFilter -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1') -SkipLog
+        $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneScriptsCache' -TenantFilter $TenantFilter -Preset Intune -SkipLog
         if ($TestResult -eq $false) {
             Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message 'Tenant does not have Intune license, skipping scripts cache' -sev Debug
+            # A license skip is still a completed collection: record authoritative empty sets for
+            # every type this collector writes so collect-on-miss does not re-run it forever.
+            foreach ($SkippedType in @('IntuneScriptGroups', 'IntuneWindowsScripts', 'IntuneMacOSScripts', 'IntuneRemediationScripts', 'IntuneLinuxScripts')) {
+                Add-CIPPDbItem -TenantFilter $TenantFilter -Type $SkippedType -Data @() -AddCount -ClearOnEmpty
+            }
             return
         }
 
@@ -46,8 +51,7 @@ function Set-CIPPDBCacheIntuneScripts {
         $Groups = ($BulkResults | Where-Object { $_.id -eq 'Groups' }).body.value
         if (-not $Groups) { $Groups = @() }
 
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneScriptGroups' -Data @($Groups)
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneScriptGroups' -Data @($Groups) -Count
+        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneScriptGroups' -Data @($Groups) -AddCount
 
         $TypeMap = @{
             Windows     = 'IntuneWindowsScripts'
@@ -75,8 +79,7 @@ function Set-CIPPDBCacheIntuneScripts {
                     })
             }
 
-            Add-CIPPDbItem -TenantFilter $TenantFilter -Type $TypeMap[$scriptId] -Data @($Scripts)
-            Add-CIPPDbItem -TenantFilter $TenantFilter -Type $TypeMap[$scriptId] -Data @($Scripts) -Count
+            Add-CIPPDbItem -TenantFilter $TenantFilter -Type $TypeMap[$scriptId] -Data @($Scripts) -AddCount
             Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Cached $(($Scripts | Measure-Object).Count) $scriptId scripts" -sev Debug
         }
     } catch {

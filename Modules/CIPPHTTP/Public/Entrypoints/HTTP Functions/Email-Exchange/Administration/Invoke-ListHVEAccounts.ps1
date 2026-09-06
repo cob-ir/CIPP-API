@@ -4,21 +4,24 @@ function Invoke-ListHVEAccounts {
         Entrypoint
     .ROLE
         Exchange.Mailbox.Read
+    .DESCRIPTION
+        Lists High Volume Email (HVE) accounts and billing policies for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
 
     $TenantFilter = $Request.Query.tenantFilter
     $Identity = $Request.Query.Identity
-    $UseReportDB = $Request.Query.UseReportDB
+    # Serve from the reporting database cache instead of live Graph. Much faster, especially for AllTenants.
+    $UseReportDB = $Request.Query.UseReportDB -eq $true
     $ListBillingPolicies = $Request.Query.ListBillingPolicies
 
     try {
         if ($ListBillingPolicies -eq 'true') {
             # Return available HVE billing policies for the tenant
             $GraphRequest = @(New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-BillingPolicy' -cmdParams @{
-                ResourceType = 'HVE'
-            })
+                    ResourceType = 'HVE'
+                })
 
             return ([HttpResponseContext]@{
                     StatusCode = [HttpStatusCode]::OK
@@ -76,9 +79,12 @@ function Invoke-ListHVEAccounts {
                 })
         }
 
-        if ($UseReportDB -eq 'true') {
+        if ($UseReportDB) {
             try {
-                $HVEItems = Get-CIPPDbItem -TenantFilter $TenantFilter -Type 'HVEAccounts' | Where-Object { $_.RowKey -ne 'HVEAccounts-Count' }
+                # 'AllTenants' hits Get-CIPPDbItem's cross-partition sentinel ('allTenants', and -ne is
+                # case-insensitive), so the read returns every tenant's rows. CippReportingDB partitions
+                # by defaultDomainName; narrow to the caller's allowed tenants before responding.
+                $HVEItems = Get-CIPPDbItem -TenantFilter $TenantFilter -Type 'HVEAccounts' | Where-Object { $_.RowKey -ne 'HVEAccounts-Count' } | Select-CippAllowedTenantData -TenantProperty 'PartitionKey'
                 if (-not $HVEItems) {
                     $GraphRequest = @()
                 } else {
@@ -104,17 +110,17 @@ function Invoke-ListHVEAccounts {
 
         # Live EXO query
         $GraphRequest = (New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-MailUser' -cmdParams @{
-            HVEAccount = $true
-        } -Select 'DisplayName,PrimarySmtpAddress,ExternalDirectoryObjectId,Alias,WhenCreated,EmailAddresses,HiddenFromAddressListsEnabled') | Select-Object `
-            @{ Name = 'displayName'; Expression = { $_.DisplayName } },
-            @{ Name = 'primarySmtpAddress'; Expression = { $_.PrimarySmtpAddress } },
-            @{ Name = 'recipientType'; Expression = { 'MailUser' } },
-            @{ Name = 'recipientTypeDetails'; Expression = { 'HVEAccount' } },
-            ExternalDirectoryObjectId,
-            Alias,
-            WhenCreated,
-            @{ Name = 'AdditionalEmailAddresses'; Expression = { ($_.'EmailAddresses' | Where-Object { $_ -clike 'smtp:*' }).Replace('smtp:', '') -join ', ' } },
-            HiddenFromAddressListsEnabled
+                HVEAccount = $true
+            } -Select 'DisplayName,PrimarySmtpAddress,ExternalDirectoryObjectId,Alias,WhenCreated,EmailAddresses,HiddenFromAddressListsEnabled') | Select-Object `
+        @{ Name = 'displayName'; Expression = { $_.DisplayName } },
+        @{ Name = 'primarySmtpAddress'; Expression = { $_.PrimarySmtpAddress } },
+        @{ Name = 'recipientType'; Expression = { 'MailUser' } },
+        @{ Name = 'recipientTypeDetails'; Expression = { 'HVEAccount' } },
+        ExternalDirectoryObjectId,
+        Alias,
+        WhenCreated,
+        @{ Name = 'AdditionalEmailAddresses'; Expression = { ($_.'EmailAddresses' | Where-Object { $_ -clike 'smtp:*' }).Replace('smtp:', '') -join ', ' } },
+        HiddenFromAddressListsEnabled
 
         $StatusCode = [HttpStatusCode]::OK
     } catch {

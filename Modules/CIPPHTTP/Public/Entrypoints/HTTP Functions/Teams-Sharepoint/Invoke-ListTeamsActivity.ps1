@@ -4,15 +4,17 @@ Function Invoke-ListTeamsActivity {
         Entrypoint
     .ROLE
         Teams.Activity.Read
+    .DESCRIPTION
+        Lists Microsoft Teams user activity reports for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
     # Interact with query parameters or the body of the request.
     $TenantFilter = $Request.Query.tenantFilter
     $type = $request.Query.Type
-    $UseReportDB = $Request.Query.UseReportDB
-
-    if ($TenantFilter -eq 'AllTenants' -or $UseReportDB -eq 'true') {
+    # Serve from the reporting database cache instead of live Graph. Much faster, especially for AllTenants.
+    $UseReportDB = $Request.Query.UseReportDB -eq $true
+    if ($TenantFilter -eq 'AllTenants' -or $UseReportDB) {
         try {
             $GraphRequest = Get-CIPPTeamsActivityReport -TenantFilter $TenantFilter -Type $type -ErrorAction Stop
             $StatusCode = [HttpStatusCode]::OK

@@ -4,9 +4,11 @@
   "dictionaryDefinitions": [],
   "dictionaries": [],
   "words": [
+    "SyncTest",
     "adminapi",
     "ADMS",
     "AITM",
+    "AOSP",
     "Autotask",
     "Bluetrait",
     "cipp",
@@ -50,6 +52,7 @@
     "Standardcal",
     "Terrl",
     "TNEF",
+    "Userless",
     "weburl",
     "winmail",
     "Yubikey"
