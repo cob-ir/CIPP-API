@@ -38,7 +38,7 @@ function Push-CIPPStandardsList {
 
         if ($IntuneTemplateFound) {
             # Perform license check
-            $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneTemplate_general' -TenantFilter $TenantFilter -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1')
+            $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneTemplate_general' -TenantFilter $TenantFilter -Preset Intune
 
             if (-not $TestResult) {
                 # Remove IntuneTemplate standards and set compare fields
@@ -78,6 +78,7 @@ function Push-CIPPStandardsList {
                     @{ id = 'windowsFeatureUpdateProfiles'; url = "deviceManagement/windowsFeatureUpdateProfiles?`$select=id,lastModifiedDateTime,displayName&`$top=200"; method = 'GET' }
                     @{ id = 'windowsQualityUpdatePolicies'; url = "deviceManagement/windowsQualityUpdatePolicies?`$select=id,lastModifiedDateTime,displayName&`$top=200"; method = 'GET' }
                     @{ id = 'windowsQualityUpdateProfiles'; url = "deviceManagement/windowsQualityUpdateProfiles?`$select=id,lastModifiedDateTime,displayName&`$top=200"; method = 'GET' }
+                    @{ id = 'hardwareConfigurations'; url = "deviceManagement/hardwareConfigurations?`$select=id,lastModifiedDateTime,displayName&`$top=200"; method = 'GET' }
                 )
 
                 try {
@@ -94,7 +95,7 @@ function Push-CIPPStandardsList {
                         $Cached = Get-CIPPAzDataTableEntity @TrackingTable -Filter "PartitionKey eq '$TenantFilter' and RowKey eq '$($Result.id)'"
 
                         $CountChanged = $false
-                        if ($Cached -and $Cached.PolicyCount -ne $null) {
+                        if ($Cached -and $null -ne $Cached.PolicyCount) {
                             $CountChanged = ($GraphCount -ne $Cached.PolicyCount)
                         }
 
@@ -119,7 +120,7 @@ function Push-CIPPStandardsList {
                                 LatestPolicyId       = $GraphId
                                 PolicyCount          = $GraphCount
                             } -Force | Out-Null
-                        } elseif ($Cached -and $Cached.PolicyCount -ne $null) {
+                        } elseif ($Cached -and $null -ne $Cached.PolicyCount) {
                             # No timestamp available - fall back to count-based detection
                             $Changed = $CountChanged -or $IdChanged
                             Add-CIPPAzDataTableEntity @TrackingTable -Entity @{
@@ -249,7 +250,7 @@ function Push-CIPPStandardsList {
 
         $CAStandardFound = ($ComputedStandards.Keys.Where({ $_ -like '*ConditionalAccessTemplate*' }, 'First').Count -gt 0)
         if ($CAStandardFound) {
-            $TestResult = Test-CIPPStandardLicense -StandardName 'ConditionalAccessTemplate_general' -TenantFilter $TenantFilter -RequiredCapabilities @('AAD_PREMIUM', 'AAD_PREMIUM_P2')
+            $TestResult = Test-CIPPStandardLicense -StandardName 'ConditionalAccessTemplate_general' -TenantFilter $TenantFilter -Preset Entra
             if (-not $TestResult) {
                 $CAKeys = @($ComputedStandards.Keys | Where-Object { $_ -like '*ConditionalAccessTemplate*' })
                 $BulkFields = [System.Collections.Generic.List[object]]::new()
@@ -281,6 +282,7 @@ function Push-CIPPStandardsList {
 
         Write-Host "Returning $($ComputedStandards.Count) standards for tenant $TenantFilter after filtering."
         # Return filtered standards
+        $QueuedTime = [int64](([datetime]::UtcNow) - (Get-Date '1/1/1970')).TotalSeconds
         $FilteredStandards = $ComputedStandards.Values | ForEach-Object {
             [PSCustomObject]@{
                 Tenant       = $_.Tenant
@@ -288,6 +290,7 @@ function Push-CIPPStandardsList {
                 Settings     = $_.Settings
                 TemplateId   = $_.TemplateId
                 FunctionName = 'CIPPStandard'
+                QueuedTime   = $QueuedTime
             }
         }
         Write-Host "Sending back $($FilteredStandards.Count) standards"

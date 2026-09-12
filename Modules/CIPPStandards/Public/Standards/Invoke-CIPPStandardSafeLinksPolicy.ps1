@@ -61,13 +61,13 @@ function Invoke-CIPPStandardSafeLinksPolicy {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SafeLinksPolicy' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SafeLinksPolicy' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
     } #we're done.
 
-    $MDOTestResult = Test-CIPPStandardLicense -StandardName 'SafeLinksPolicy' -TenantFilter $Tenant -RequiredCapabilities @('ATP_ENTERPRISE', 'ATP_ENTERPRISE_GOV', 'THREAT_INTELLIGENCE')
+    $MDOTestResult = Test-CIPPStandardLicense -StandardName 'SafeLinksPolicy' -TenantFilter $Tenant -Preset DefenderForOffice365
 
     if ($MDOTestResult -eq $false) {
         return $true
@@ -100,9 +100,11 @@ function Invoke-CIPPStandardSafeLinksPolicy {
         # Use existing policy name if found
         $PolicyName = $ExistingPolicy.Name
     }
-    # Derive rule name from policy name, but check for old names for backward compatibility
-    $DesiredRuleName = "$PolicyName Rule"
-    $RuleList = @($DesiredRuleName, 'CIPP Default SafeLinks Rule', 'CIPP Default SafeLinks Policy')
+    # Derive rule name from policy name using the same convention as the Safe Links page and
+    # templates (PolicyName_Rule), but check for old names for backward compatibility so rules
+    # created as "PolicyName Rule" by earlier versions of this standard are adopted, not duplicated
+    $DesiredRuleName = "$($PolicyName)_Rule"
+    $RuleList = @($DesiredRuleName, "$PolicyName Rule", 'CIPP Default SafeLinks Rule', 'CIPP Default SafeLinks Policy')
     $ExistingRule = $AllSafeLinksRule | Where-Object -Property Name -In $RuleList | Select-Object -First 1
     if ($null -eq $ExistingRule.Name) {
         # No existing rule - use the derived name
