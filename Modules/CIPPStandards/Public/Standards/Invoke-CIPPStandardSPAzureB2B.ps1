@@ -40,7 +40,7 @@ function Invoke-CIPPStandardSPAzureB2B {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPAzureB2B' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPAzureB2B' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -86,7 +86,6 @@ function Invoke-CIPPStandardSPAzureB2B {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'AzureB2B' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
 
         $CurrentValue = @{
             EnableAzureADB2BIntegration = $CurrentState.EnableAzureADB2BIntegration

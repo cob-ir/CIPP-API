@@ -38,7 +38,7 @@ function Invoke-CIPPStandardEnableOnlineArchiving {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'EnableOnlineArchiving' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'EnableOnlineArchiving' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
@@ -102,6 +102,5 @@ function Invoke-CIPPStandardEnableOnlineArchiving {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.EnableOnlineArchiving' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'EnableOnlineArchiving' -FieldValue $filtered -StoreAs json -Tenant $Tenant
     }
 }

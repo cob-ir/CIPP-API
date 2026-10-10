@@ -39,7 +39,7 @@ function Invoke-CIPPStandardTenantDefaultTimezone {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'TenantDefaultTimezone' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'TenantDefaultTimezone' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -86,7 +86,6 @@ function Invoke-CIPPStandardTenantDefaultTimezone {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'TenantDefaultTimezone' -FieldValue $CurrentState.tenantDefaultTimezone -StoreAs string -Tenant $Tenant
         $CurrentValue = @{
             tenantDefaultTimezone = $CurrentState.tenantDefaultTimezone
         }

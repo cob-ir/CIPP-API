@@ -43,7 +43,7 @@ function Invoke-CIPPStandardAuditLog {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'AuditLog' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'AuditLog' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
@@ -97,6 +97,5 @@ function Invoke-CIPPStandardAuditLog {
     if ($Settings.report -eq $true) {
         $state = $AuditLogEnabled -eq $true ? $true : $AuditLogEnabled
         Set-CIPPStandardsCompareField -FieldName 'standards.AuditLog' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'AuditLog' -FieldValue $AuditLogEnabled -StoreAs bool -Tenant $tenant
     }
 }

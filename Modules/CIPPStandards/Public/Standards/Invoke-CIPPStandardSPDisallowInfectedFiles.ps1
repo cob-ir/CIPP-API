@@ -44,7 +44,7 @@ function Invoke-CIPPStandardSPDisallowInfectedFiles {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisallowInfectedFiles' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV','ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisallowInfectedFiles' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -91,7 +91,6 @@ function Invoke-CIPPStandardSPDisallowInfectedFiles {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SPDisallowInfectedFiles' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
 
         $CurrentValue = @{
             DisallowInfectedFileDownload = $CurrentState.DisallowInfectedFileDownload

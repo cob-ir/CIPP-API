@@ -36,7 +36,7 @@ function Invoke-CIPPStandardExternalMFATrusted {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'ExternalMFATrusted' -TenantFilter $Tenant -RequiredCapabilities @('AAD_PREMIUM', 'AAD_PREMIUM_P2')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'ExternalMFATrusted' -TenantFilter $Tenant -Preset Entra
 
     if ($TestResult -eq $false) {
         return $true
@@ -87,7 +87,6 @@ function Invoke-CIPPStandardExternalMFATrusted {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.ExternalMFATrusted' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'ExternalMFATrusted' -FieldValue $ExternalMFATrusted.inboundTrust.isMfaAccepted -StoreAs bool -Tenant $Tenant
     }
 
     if ($Settings.alert -eq $true) {

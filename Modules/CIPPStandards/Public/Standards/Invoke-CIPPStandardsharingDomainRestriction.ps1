@@ -45,7 +45,7 @@ function Invoke-CIPPStandardsharingDomainRestriction {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'sharingDomainRestriction' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'sharingDomainRestriction' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -117,17 +117,16 @@ function Invoke-CIPPStandardsharingDomainRestriction {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'sharingDomainRestriction' -FieldValue [bool]$StateIsCorrect -StoreAs bool -Tenant $tenant
 
         $CurrentValue = @{
             sharingDomainRestrictionMode = $CurrentState.sharingDomainRestrictionMode
-            sharingAllowedDomainList     = $CurrentState.sharingAllowedDomainList
-            sharingBlockedDomainList     = $CurrentState.sharingBlockedDomainList
+            sharingAllowedDomainList     = @($CurrentState.sharingAllowedDomainList ?? @())
+            sharingBlockedDomainList     = @($CurrentState.sharingBlockedDomainList ?? @())
         }
         $ExpectedValue = @{
             sharingDomainRestrictionMode = $mode
-            sharingAllowedDomainList     = if ($mode -eq 'allowList') { $SelectedDomains } else { @() }
-            sharingBlockedDomainList     = if ($mode -eq 'blockList') { $SelectedDomains } else { @() }
+            sharingAllowedDomainList     = @(if ($mode -eq 'allowList') { $SelectedDomains } else { @() })
+            sharingBlockedDomainList     = @(if ($mode -eq 'blockList') { $SelectedDomains } else { @() })
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.sharingDomainRestriction' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -Tenant $Tenant
     }

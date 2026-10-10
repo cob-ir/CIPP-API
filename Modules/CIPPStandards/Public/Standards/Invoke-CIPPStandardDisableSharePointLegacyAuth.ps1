@@ -47,7 +47,7 @@ function Invoke-CIPPStandardDisableSharePointLegacyAuth {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'DisableSharePointLegacyAuth' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'DisableSharePointLegacyAuth' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -95,6 +95,5 @@ function Invoke-CIPPStandardDisableSharePointLegacyAuth {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.DisableSharePointLegacyAuth' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'SharePointLegacyAuthEnabled' -FieldValue $CurrentInfo.isLegacyAuthProtocolsEnabled -StoreAs bool -Tenant $tenant
     }
 }

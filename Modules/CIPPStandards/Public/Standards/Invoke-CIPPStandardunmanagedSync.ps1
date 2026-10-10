@@ -42,7 +42,7 @@ function Invoke-CIPPStandardunmanagedSync {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'unmanagedSync' -TenantFilter $Tenant -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'unmanagedSync' -TenantFilter $Tenant -Preset Intune
 
     if ($TestResult -eq $false) {
         return $true
@@ -94,6 +94,5 @@ function Invoke-CIPPStandardunmanagedSync {
             ConditionalAccessPolicy = $WantedState
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.unmanagedSync' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -Tenant $Tenant
-        Add-CIPPBPAField -FieldName 'unmanagedSync' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }

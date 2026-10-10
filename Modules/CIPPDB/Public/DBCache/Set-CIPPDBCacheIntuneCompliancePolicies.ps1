@@ -7,9 +7,13 @@ function Set-CIPPDBCacheIntuneCompliancePolicies {
     )
 
     try {
-        $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneCompliancePoliciesCache' -TenantFilter $TenantFilter -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1') -SkipLog
+        $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneCompliancePoliciesCache' -TenantFilter $TenantFilter -Preset Intune -SkipLog
         if ($TestResult -eq $false) {
             Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message 'Tenant does not have Intune license, skipping compliance policies cache' -sev Debug
+            # A license skip is still a completed collection: record authoritative empty sets for
+            # both types this collector writes so collect-on-miss does not re-run it forever.
+            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneCompliancePolicyGroups' -Data @() -AddCount -ClearOnEmpty
+            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneDeviceCompliancePolicies' -Data @() -AddCount -ClearOnEmpty
             return
         }
 
@@ -28,16 +32,23 @@ function Set-CIPPDBCacheIntuneCompliancePolicies {
         )
 
         $BulkResults = New-GraphBulkRequest -Requests $BulkRequests -tenantid $TenantFilter
-        $Groups = ($BulkResults | Where-Object { $_.id -eq 'Groups' }).body.value
-        $Policies = ($BulkResults | Where-Object { $_.id -eq 'CompliancePolicies' }).body.value
+        # A batch sub-request failure must PRESERVE the previous cache (rows and Count
+        # metadata) - writing an empty collection on error poisons every consumer that
+        # treats a fresh empty cache as authoritative (baseline drift detection).
+        $GetChecked = {
+            param($Id)
+            $Result = $BulkResults | Where-Object { $_.id -eq $Id } | Select-Object -First 1
+            if (-not $Result -or $null -eq $Result.status -or [int]$Result.status -lt 200 -or [int]$Result.status -ge 300) {
+                $GraphError = $Result.body.error.message ?? $Result.body.message ?? 'no batch response'
+                throw "Graph request '$Id' failed (HTTP $($Result.status)): $GraphError - preserving the previous cache"
+            }
+            @($Result.body.value)
+        }
+        $Groups = & $GetChecked 'Groups'
+        $Policies = & $GetChecked 'CompliancePolicies'
 
-        if (-not $Groups) { $Groups = @() }
-        if (-not $Policies) { $Policies = @() }
-
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneCompliancePolicyGroups' -Data @($Groups)
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneCompliancePolicyGroups' -Data @($Groups) -Count
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneDeviceCompliancePolicies' -Data @($Policies)
-        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneDeviceCompliancePolicies' -Data @($Policies) -Count
+        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneCompliancePolicyGroups' -Data @($Groups) -AddCount
+        Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'IntuneDeviceCompliancePolicies' -Data @($Policies) -AddCount
 
         Write-LogMessage -API 'CIPPDBCache' -tenant $TenantFilter -message "Cached $(($Policies | Measure-Object).Count) compliance policies" -sev Debug
     } catch {

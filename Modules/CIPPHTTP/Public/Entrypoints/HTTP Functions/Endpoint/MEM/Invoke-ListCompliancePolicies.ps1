@@ -1,22 +1,20 @@
-﻿function Invoke-ListCompliancePolicies {
+function Invoke-ListCompliancePolicies {
     <#
     .FUNCTIONALITY
         Entrypoint
     .ROLE
         Endpoint.MEM.Read
+    .DESCRIPTION
+        Lists Intune device compliance policies for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.
     #>
     [CmdletBinding()]
     param($Request, $TriggerMetadata)
 
-    $APIName = $Request.Params.CIPPEndpoint
-    $Headers = $Request.Headers
-    Write-LogMessage -headers $Headers -API $APIName -message 'Accessed this API' -Sev 'Debug'
-
     $TenantFilter = $Request.Query.tenantFilter
-    $UseReportDB = $Request.Query.UseReportDB
-
+    # Serve from the reporting database cache instead of live Graph. Much faster, especially for AllTenants.
+    $UseReportDB = $Request.Query.UseReportDB -eq $true
     try {
-        if ($TenantFilter -eq 'AllTenants' -or $UseReportDB -eq 'true') {
+        if ($TenantFilter -eq 'AllTenants' -or $UseReportDB) {
             try {
                 $GraphRequest = Get-CIPPIntuneCompliancePolicyReport -TenantFilter $TenantFilter -ErrorAction Stop
                 $StatusCode = [HttpStatusCode]::OK
@@ -89,9 +87,11 @@
                 }
             }
 
-            $Policy | Add-Member -NotePropertyName 'PolicyTypeName' -NotePropertyValue $policyType -Force
-            $Policy | Add-Member -NotePropertyName 'PolicyAssignment' -NotePropertyValue ($PolicyAssignment -join ', ') -Force
-            $Policy | Add-Member -NotePropertyName 'PolicyExclude' -NotePropertyValue ($PolicyExclude -join ', ') -Force
+            $Policy | Add-Member -NotePropertyMembers ([ordered]@{
+                    PolicyTypeName   = $policyType
+                    PolicyAssignment = ($PolicyAssignment -join ', ')
+                    PolicyExclude    = ($PolicyExclude -join ', ')
+                }) -Force
 
             $GraphRequest.Add($Policy)
         }
@@ -99,7 +99,7 @@
         $StatusCode = [HttpStatusCode]::OK
     } catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-        $StatusCode = [HttpStatusCode]::Forbidden
+        $StatusCode = [HttpStatusCode]::InternalServerError
         $GraphRequest = $ErrorMessage
     }
 

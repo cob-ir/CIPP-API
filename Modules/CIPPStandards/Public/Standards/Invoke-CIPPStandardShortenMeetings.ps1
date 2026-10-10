@@ -39,7 +39,7 @@ function Invoke-CIPPStandardShortenMeetings {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'ShortenMeetings' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'ShortenMeetings' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
@@ -86,18 +86,6 @@ function Invoke-CIPPStandardShortenMeetings {
     }
 
     if ($Settings.report -eq $true) {
-        $BPAField = @{
-            FieldName  = 'ShortenMeetings'
-            FieldValue = $CorrectState
-            Tenant     = $Tenant
-        }
-
-        if ($CorrectState -eq $true) {
-            Add-CIPPBPAField @BPAField -StoreAs bool
-        } else {
-            Add-CIPPBPAField @BPAField -StoreAs json
-        }
-
         $CurrentValue = @{
             ShortenEventScopeDefault            = $CurrentState.ShortenEventScopeDefault
             DefaultMinutesToReduceShortEventsBy = $CurrentState.DefaultMinutesToReduceShortEventsBy

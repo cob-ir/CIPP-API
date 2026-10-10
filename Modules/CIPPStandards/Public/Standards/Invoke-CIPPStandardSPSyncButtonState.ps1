@@ -39,7 +39,7 @@ function Invoke-CIPPStandardSPSyncButtonState {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPSyncButtonState' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPSyncButtonState' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -90,7 +90,6 @@ function Invoke-CIPPStandardSPSyncButtonState {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SPSyncButtonDisabled' -FieldValue $CurrentState.HideSyncButtonOnDocLib -StoreAs bool -Tenant $Tenant
         if ($StateIsCorrect) {
             $FieldValue = $true
         } else {

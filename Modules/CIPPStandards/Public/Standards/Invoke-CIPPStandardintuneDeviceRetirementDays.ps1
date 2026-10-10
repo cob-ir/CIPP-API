@@ -7,8 +7,8 @@ function Invoke-CIPPStandardintuneDeviceRetirementDays {
     .SYNOPSIS
         (Label) Set inactive device retirement days
     .DESCRIPTION
-        (Helptext) A value between 31 and 365 is supported. retired devices are removed from Intune after the specified number of days.
-        (DocsDescription) A value between 31 and 365 is supported. retired devices are removed from Intune after the specified number of days.
+        (Helptext) A value between 30 and 270 is supported, matching what Intune accepts. Retired devices are removed from Intune after the specified number of days.
+        (DocsDescription) A value between 30 and 270 is supported, matching what Intune accepts. Retired devices are removed from Intune after the specified number of days.
     .NOTES
         CAT
             Intune Standards
@@ -38,7 +38,7 @@ function Invoke-CIPPStandardintuneDeviceRetirementDays {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'intuneDeviceRetirementDays' -TenantFilter $Tenant -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'intuneDeviceRetirementDays' -TenantFilter $Tenant -Preset Intune
 
     if ($TestResult -eq $false) {
         return $true
@@ -94,6 +94,5 @@ function Invoke-CIPPStandardintuneDeviceRetirementDays {
             deviceInactivityBeforeRetirementInDays = $Settings.days
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.intuneDeviceRetirementDays' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'intuneDeviceRetirementDays' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
     }
 }

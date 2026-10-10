@@ -37,7 +37,7 @@ function Invoke-CIPPStandardSPDisableLegacyWorkflows {
         https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisableLegacyWorkflows' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisableLegacyWorkflows' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -86,7 +86,6 @@ function Invoke-CIPPStandardSPDisableLegacyWorkflows {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SPDisableLegacyWorkflows' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
 
         $CurrentValue = @{
             StopNew2010Workflows = $CurrentState.StopNew2010Workflows

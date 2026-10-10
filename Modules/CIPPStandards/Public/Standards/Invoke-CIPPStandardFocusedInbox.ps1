@@ -37,7 +37,7 @@ function Invoke-CIPPStandardFocusedInbox {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'FocusedInbox' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'FocusedInbox' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
@@ -94,6 +94,5 @@ function Invoke-CIPPStandardFocusedInbox {
             FocusedInboxOn = $WantedState
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.FocusedInbox' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'FocusedInboxCorrectState' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }

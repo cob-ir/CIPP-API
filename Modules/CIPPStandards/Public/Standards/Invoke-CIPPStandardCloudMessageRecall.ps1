@@ -37,7 +37,7 @@ function Invoke-CIPPStandardCloudMessageRecall {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'CloudMessageRecall' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'CloudMessageRecall' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
@@ -74,7 +74,6 @@ function Invoke-CIPPStandardCloudMessageRecall {
         # Default is not set, not set means it's enabled
         if ($null -eq $CurrentState ) { $CurrentState = $true }
         Set-CIPPStandardsCompareField -FieldName 'standards.CloudMessageRecall' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'MessageRecall' -FieldValue $CurrentState -StoreAs bool -Tenant $Tenant
     }
 
 

@@ -38,7 +38,7 @@ function Invoke-CIPPStandarddisableMacSync {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'disableMacSync' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'disableMacSync' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -89,6 +89,5 @@ function Invoke-CIPPStandarddisableMacSync {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.disableMacSync' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'MacSync' -FieldValue $CurrentState -StoreAs bool -Tenant $tenant
     }
 }

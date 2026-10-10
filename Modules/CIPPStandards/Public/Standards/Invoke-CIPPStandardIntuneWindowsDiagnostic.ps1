@@ -39,7 +39,7 @@ Function Invoke-CIPPStandardIntuneWindowsDiagnostic {
     [CmdletBinding()]
     param($Tenant, $Settings)
 
-    $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneWindowsDiagnostic' -TenantFilter $Tenant -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'IntuneWindowsDiagnostic' -TenantFilter $Tenant -Preset Intune
 
     if ($TestResult -eq $false) {
         return $true
@@ -103,6 +103,5 @@ Function Invoke-CIPPStandardIntuneWindowsDiagnostic {
             hasValidWindowsLicense                           = $Settings.hasValidWindowsLicense
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.IntuneWindowsDiagnostic' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'IntuneWindowsDiagnostic' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }

@@ -45,7 +45,7 @@ function Invoke-CIPPStandardSPEmailAttestation {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPEmailAttestation' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPEmailAttestation' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -98,7 +98,6 @@ function Invoke-CIPPStandardSPEmailAttestation {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SPEmailAttestation' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
 
         $CurrentValue = @{
             EmailAttestationReAuthDays = $CurrentState.EmailAttestationReAuthDays

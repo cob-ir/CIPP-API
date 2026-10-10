@@ -39,7 +39,7 @@ function Invoke-CIPPStandardWindowsBackupRestore {
     [CmdletBinding()]
     param($Tenant, $Settings)
 
-    $TestResult = Test-CIPPStandardLicense -StandardName 'WindowsBackupRestore' -TenantFilter $Tenant -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'WindowsBackupRestore' -TenantFilter $Tenant -Preset Intune
 
     if ($TestResult -eq $false) {
         return $true
@@ -102,6 +102,5 @@ function Invoke-CIPPStandardWindowsBackupRestore {
 
     if ($Settings.report -eq $true) {
         Set-CIPPStandardsCompareField -FieldName 'standards.WindowsBackupRestore' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'WindowsBackupRestore' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }

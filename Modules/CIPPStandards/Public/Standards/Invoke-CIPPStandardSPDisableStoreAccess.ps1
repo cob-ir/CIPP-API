@@ -39,7 +39,7 @@ function Invoke-CIPPStandardSPDisableStoreAccess {
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisableStoreAccess' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'SHAREPOINTENTERPRISE_GOV', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisableStoreAccess' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -93,6 +93,5 @@ function Invoke-CIPPStandardSPDisableStoreAccess {
             SPDisableStoreAccess = $true
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.SPDisableStoreAccess' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'SPDisableStoreAccess' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }
